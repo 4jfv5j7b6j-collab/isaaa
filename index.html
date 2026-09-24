@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>[暂定/1.0]</title>
+<title>1.3</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{height:100%;background:#05070c;overflow:hidden;
@@ -47,7 +47,7 @@ canvas{display:block;width:100%;height:100%;touch-action:none}
 #editBar{position:fixed;top:0;left:0;right:0;padding:8px 12px;
   background:rgba(11,18,32,.95);display:none;gap:8px;align-items:center;
   flex-wrap:wrap;border-bottom:1px solid rgba(90,190,225,.3);font-size:12px;z-index:30;
-  color:#9ef4ff}
+  color:#9ef4ff;max-height:60vh;overflow-y:auto}
 #editBar.show{display:flex}
 #editBar button{padding:5px 12px;border-radius:6px;border:1px solid rgba(126,240,255,.4);
   background:rgba(60,216,255,.1);color:#9ef4ff;font-size:12px;cursor:pointer;font-family:inherit}
@@ -56,6 +56,30 @@ canvas{display:block;width:100%;height:100%;touch-action:none}
   border:1px solid rgba(126,240,255,.3);background:#05070c;color:#9ef4ff;
   font-size:12px;text-align:center;font-family:inherit}
 #editBar label{display:flex;align-items:center;gap:4px;opacity:.85}
+#editBar select{padding:5px 8px;border-radius:6px;
+  border:1px solid rgba(126,240,255,.4);background:#05070c;color:#9ef4ff;font-size:12px}
+#editBar .fileLabel{padding:5px 12px;border-radius:6px;border:1px solid rgba(126,240,255,.4);
+  background:rgba(60,216,255,.1);color:#9ef4ff;font-size:12px;cursor:pointer}
+#editBar .fileLabel input{display:none}
+#editBar .sep{width:1px;height:20px;background:rgba(126,240,255,.25);margin:0 4px}
+
+/* 偏移/速度面板 */
+#offsetPanel{position:fixed;right:14px;top:60px;width:240px;padding:12px;
+  background:rgba(11,18,32,.97);border:1px solid rgba(126,240,255,.4);
+  border-radius:10px;z-index:35;display:none;color:#9ef4ff;font-size:12px;
+  max-height:70vh;overflow-y:auto}
+#offsetPanel.show{display:block}
+#offsetPanel h3{font-size:13px;font-weight:500;margin-bottom:8px;
+  letter-spacing:2px;opacity:.85}
+#offsetPanel .row{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+#offsetPanel .row input{flex:1;padding:4px 6px;border-radius:4px;
+  border:1px solid rgba(126,240,255,.3);background:#05070c;color:#9ef4ff;
+  font-size:12px;text-align:center;font-family:inherit}
+#offsetPanel button{padding:5px 10px;border-radius:6px;
+  border:1px solid rgba(126,240,255,.4);background:rgba(60,216,255,.1);
+  color:#9ef4ff;font-size:12px;cursor:pointer;font-family:inherit}
+#offsetPanel .hint{font-size:11px;opacity:.55;line-height:1.6;margin-top:6px}
+#offsetPanel .section{padding-top:8px;border-top:1px solid rgba(126,240,255,.2);margin-top:8px}
 
 #editToggle{position:fixed;right:14px;bottom:14px;width:46px;height:46px;
   border-radius:50%;border:1px solid rgba(126,240,255,.45);
@@ -63,7 +87,26 @@ canvas{display:block;width:100%;height:100%;touch-action:none}
   z-index:25;font-family:inherit}
 #editToggle:active{background:rgba(60,216,255,.3)}
 
-#jsonOut{position:fixed;left:0;right:0;bottom:0;height:140px;padding:8px 12px;
+#speedPanel{position:fixed;right:14px;bottom:70px;width:220px;padding:10px 12px;
+  background:rgba(11,18,32,.94);border:1px solid rgba(126,240,255,.4);
+  border-radius:10px;z-index:22;display:none;color:#9ef4ff;font-size:12px}
+#speedPanel.show{display:block}
+#speedPanel h3{font-size:12px;font-weight:500;margin-bottom:6px;
+  letter-spacing:2px;opacity:.8}
+#speedPanel .row{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+#speedPanel .row input{flex:1;padding:4px 6px;border-radius:4px;
+  border:1px solid rgba(126,240,255,.3);background:#05070c;color:#9ef4ff;
+  font-size:12px;text-align:center;font-family:inherit}
+#speedPanel button{padding:4px 8px;border-radius:6px;
+  border:1px solid rgba(126,240,255,.4);background:rgba(60,216,255,.1);
+  color:#9ef4ff;font-size:12px;cursor:pointer;font-family:inherit}
+#speedToggle{position:fixed;right:70px;bottom:14px;width:46px;height:46px;
+  border-radius:50%;border:1px solid rgba(126,240,255,.45);
+  background:rgba(60,216,255,.12);color:#9ef4ff;font-size:16px;cursor:pointer;
+  z-index:25;font-family:inherit}
+#speedToggle:active{background:rgba(60,216,255,.3)}
+
+#jsonOut{position:fixed;left:0;right:0;bottom:0;height:100px;padding:8px 12px;
   background:rgba(11,18,32,.96);border-top:1px solid rgba(90,190,225,.3);
   font-family:monospace;font-size:11px;color:#8affc1;overflow:auto;
   white-space:pre;display:none;z-index:30}
@@ -84,11 +127,13 @@ canvas{display:block;width:100%;height:100%;touch-action:none}
 <div id="judge"></div>
 
 <div id="overlay">
-  <h1>弈 拍</h1>
+  <h1>阴   游</h1>
   <p>扫描线每经过一行，点击该行上的交叉点落子。<br>
      越接近节拍，判定越高。<br>
      你落黑子后，AI 会走白子。<br>
-     按 E 键（或右下角按钮）进入谱面编辑。<br>
+     玩法参考了cytusII<br>
+     按 E 键进入谱面编辑，*可导入音乐*<br>
+     写谱、校准偏移、调节线速、导出/导入。<br>
      开始前有 4 拍预备。</p>
   <button id="btn">开 始</button>
 </div>
@@ -97,15 +142,102 @@ canvas{display:block;width:100%;height:100%;touch-action:none}
 <div id="editBar">
   <button id="mTap" class="on">短按</button>
   <button id="mHold">长按</button>
-  <label>拍 <input id="beat" type="number" value="0" step="0.5" min="0"></label>
-  <label>长按拍数 <input id="dur" type="number" value="2" step="0.5" min="0.5"></label>
+  <label>拍 <input id="beat" type="number" value="0" step="0.25" min="0"></label>
+  <label>长按拍数 <input id="dur" type="number" value="2" step="0.25" min="0.25"></label>
+  <label>BPM <input id="bpmInput" type="number" value="120" step="1" min="30" max="300"></label>
+  <label>线速 <input id="speedInput" type="number" value="1" step="0.1" min="0.3" max="3"></label>
+  <span class="sep"></span>
   <button id="delBtn">删除模式</button>
   <button id="undoBtn">撤销</button>
   <button id="clearBtn">清空</button>
-  <button id="copyBtn">复制JSON</button>
+  <span class="sep"></span>
+  <button id="offsetBtn">偏移/速度</button>
+  <button id="metronomeBtn">节拍器</button>
+  <span class="sep"></span>
+  <button id="saveBtn">保存谱面</button>
+  <button id="testBtn">试玩当前谱面</button>
+  <span class="sep"></span>
+  <button id="newChartBtn">新建</button>
+  <button id="delChartBtn">删除谱面</button>
+  <select id="chartSelect"></select>
+  <label class="fileLabel">导入音乐<input id="musicInput" type="file" accept="audio/*"></label>
+  <span class="sep"></span>
+  <button id="exportBtn">导出 JSON</button>
+  <label class="fileLabel">导入 JSON<input id="importJsonInput" type="file" accept=".json,application/json"></label>
   <button id="closeEdit">退出编辑</button>
 </div>
 
+<!-- 偏移/速度面板 -->
+<div id="offsetPanel">
+  <h3>偏移校准</h3>
+  <div class="row">
+    <span>偏移</span>
+    <input id="offsetInput" type="number" value="0" step="10">
+    <span>ms</span>
+  </div>
+  <div class="row" style="gap:4px">
+    <button id="offsetMinus">-50</button>
+    <button id="offsetMinus10">-10</button>
+    <button id="offsetPlus10">+10</button>
+    <button id="offsetPlus">+50</button>
+  </div>
+  <div class="row">
+    <button id="offsetPlay" style="flex:1">试听音乐</button>
+    <button id="offsetStop" style="flex:1">停止</button>
+  </div>
+  <div class="hint">
+    正值 = 谱面提前，负值 = 谱面延后。<br>
+    边听边调，直到扫描线经过音符的时刻正好踩在鼓点上。
+  </div>
+
+  <div class="section">
+    <h3>扫描线速度</h3>
+    <div class="row">
+      <span>倍率</span>
+      <input id="speedInput2" type="number" value="1" step="0.1" min="0.3" max="3">
+    </div>
+    <div class="row" style="gap:4px">
+      <button id="speedMinus">-0.1</button>
+      <button id="speedMinus2">-0.5</button>
+      <button id="speedPlus2">+0.5</button>
+      <button id="speedPlus">+0.1</button>
+    </div>
+    <div class="hint">
+      只影响扫描线快慢，不改音乐和谱面。<br>
+      1.0 = 正常，大于 1 更快，小于 1 更慢。<br>
+      建议 0.6 ～ 1.8。
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>谱面文件</h3>
+    <div class="row" style="gap:4px">
+      <button id="exportBtn2" style="flex:1">导出 JSON</button>
+      <button id="importJsonBtn2" style="flex:1">导入 JSON</button>
+    </div>
+    <div class="hint">
+      导出后在电脑端导入，即可互通。<br>
+      导入会替换当前谱面内容。
+    </div>
+  </div>
+</div>
+
+<!-- 游戏内快捷速度面板 -->
+<div id="speedPanel">
+  <h3>扫描线速度</h3>
+  <div class="row">
+    <span>倍率</span>
+    <input id="speedInput3" type="number" value="1" step="0.1" min="0.3" max="3">
+  </div>
+  <div class="row" style="gap:4px">
+    <button id="speedMinusGame">-0.1</button>
+    <button id="speedMinus2Game">-0.5</button>
+    <button id="speedPlus2Game">+0.5</button>
+    <button id="speedPlusGame">+0.1</button>
+  </div>
+</div>
+
+<div id="speedToggle">⏩</div>
 <div id="editToggle">✎</div>
 <div id="jsonOut"></div>
 <div id="editHint">点击交叉点添加音符</div>
@@ -115,32 +247,88 @@ canvas{display:block;width:100%;height:100%;touch-action:none}
 'use strict';
 
 // ==================== 基础配置 ====================
-const BPM = 120;
-const BEAT = 60 / BPM;
-const CYCLE = 16;
 const N = 9;
-
+const CYCLE = 16;
 const JUDGE = { perfect: 70, good: 140, bad: 220 };
 const SCALE = [261.63,293.66,329.63,392.00,440.00,523.25,587.33,659.25,783.99];
 const CHORDS = [110.00, 87.31, 130.81, 98.00];
 
-// 谱面：支持 tap / hold
-let CHART = [
-  { beat: 0,  row: 0, col: 4, type: 'tap' },
-  { beat: 2,  row: 2, col: 2, type: 'tap' },
-  { beat: 4,  row: 4, col: 4, type: 'hold', duration: 2 },
-  { beat: 8,  row: 8, col: 4, type: 'tap' },
-  { beat: 9,  row: 7, col: 6, type: 'tap' },
-  { beat: 11, row: 5, col: 4, type: 'hold', duration: 1.5 },
-  { beat: 14, row: 3, col: 6, type: 'tap' },
-  { beat: 16, row: 0, col: 2, type: 'tap' },
-  { beat: 18, row: 2, col: 6, type: 'hold', duration: 2 },
-  { beat: 22, row: 6, col: 6, type: 'tap' },
-  { beat: 24, row: 8, col: 2, type: 'hold', duration: 1 },
-  { beat: 27, row: 5, col: 2, type: 'tap' },
-  { beat: 29, row: 3, col: 6, type: 'tap' },
-];
+let BPM = 120;
+let BEAT = 60 / BPM;
+let OFFSET = 0;
+let SPEED = 1;
+
+// ==================== 谱面存储 ====================
+const STORAGE_KEY = 'yipai_charts_v3';
+
+function loadCharts() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  try {
+    const old = localStorage.getItem('yipai_charts_v2');
+    if (old) {
+      const arr = JSON.parse(old);
+      arr.forEach(c => {
+        if (c.offset === undefined) c.offset = 0;
+        if (c.speed === undefined) c.speed = 1;
+      });
+      return arr;
+    }
+  } catch(e) {}
+  return [{
+    name: '默认谱面',
+    bpm: 120,
+    offset: 0,
+    speed: 1,
+    notes: [
+      { beat: 0,  row: 0, col: 4, type: 'tap' },
+      { beat: 2,  row: 2, col: 2, type: 'tap' },
+      { beat: 4,  row: 4, col: 4, type: 'hold', duration: 2 },
+      { beat: 8,  row: 8, col: 4, type: 'tap' },
+      { beat: 9,  row: 7, col: 6, type: 'tap' },
+      { beat: 11, row: 5, col: 4, type: 'hold', duration: 1.5 },
+      { beat: 14, row: 3, col: 6, type: 'tap' },
+      { beat: 16, row: 0, col: 2, type: 'tap' },
+      { beat: 18, row: 2, col: 6, type: 'hold', duration: 2 },
+      { beat: 22, row: 6, col: 6, type: 'tap' },
+      { beat: 24, row: 8, col: 2, type: 'hold', duration: 1 },
+      { beat: 27, row: 5, col: 2, type: 'tap' },
+      { beat: 29, row: 3, col: 6, type: 'tap' },
+    ]
+  }];
+}
+
+function saveCharts(charts) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(charts));
+  } catch(e) {
+    alert('保存失败：存储空间可能已满');
+  }
+}
+
+let charts = loadCharts();
+let currentChartIndex = 0;
+let CHART = charts[currentChartIndex].notes;
 let END_BEAT = 34;
+
+function refreshChartRefs() {
+  const c = charts[currentChartIndex];
+  CHART = c.notes;
+  BPM = c.bpm || 120;
+  BEAT = 60 / BPM;
+  OFFSET = c.offset || 0;
+  SPEED = c.speed || 1;
+  let maxBeat = 0;
+  for (const n of CHART) {
+    const end = n.beat + (n.type === 'hold' ? n.duration : 0);
+    if (end > maxBeat) maxBeat = end;
+  }
+  END_BEAT = maxBeat + 6;
+}
+
+refreshChartRefs();
 
 // ==================== 画布 ====================
 const canvas = document.getElementById('cv');
@@ -172,6 +360,9 @@ window.addEventListener('resize', resize);
 
 // ==================== 音频 ====================
 let actx = null, master = null, noiseBuf = null;
+let musicBuffer = null;
+let musicSource = null;
+let previewSource = null;
 
 function initAudio() {
   if (actx) return;
@@ -264,6 +455,16 @@ function playMiss(t) {
   o.start(t); o.stop(t + 0.22);
 }
 
+function playClick(t) {
+  const o = actx.createOscillator(), g = actx.createGain();
+  o.type = 'square';
+  o.frequency.value = 1200;
+  g.gain.setValueAtTime(0.15, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
+  o.connect(g).connect(master);
+  o.start(t); o.stop(t + 0.05);
+}
+
 // ==================== 游戏状态 ====================
 let started = false;
 let ended = false;
@@ -279,12 +480,24 @@ let board = Array.from({ length: N }, () => Array(N).fill(0));
 let aiPending = false;
 let aiMoveBeat = 0;
 
-// ==================== 编辑器状态 ====================
+let isTestRun = false;
+let metronomeOn = false;
+
 let editMode = false;
-let editNotes = [];        // 编辑中的音符列表
-let editMode2 = 'tap';     // 当前添加类型
-let editDelete = false;    // 删除模式
-let editHistory = [];      // 撤销栈
+let editNotes = [];
+let editMode2 = 'tap';
+let editDelete = false;
+let editHistory = [];
+
+function beatToAudioTime(beat) {
+  return startTime + beat * BEAT - OFFSET / 1000;
+}
+
+function scanPos(beats) {
+  let u = (beats * SPEED) % CYCLE;
+  if (u < 0) u += CYCLE;
+  return u <= (N - 1) ? u : CYCLE - u;
+}
 
 function buildNotes() {
   notes = CHART.map(n => ({
@@ -306,12 +519,6 @@ function resetBoard() {
   board = Array.from({ length: N }, () => Array(N).fill(0));
   aiPending = false;
   aiMoveBeat = 0;
-}
-
-function scanPos(beats) {
-  let u = beats % CYCLE;
-  if (u < 0) u += CYCLE;
-  return u <= (N - 1) ? u : CYCLE - u;
 }
 
 // ==================== 围棋逻辑 ====================
@@ -445,10 +652,11 @@ function scheduler() {
   if (!started) return;
   const horizon = actx.currentTime + 0.25;
   while (true) {
-    const t = startTime + nextBeatToSchedule * BEAT;
+    const t = beatToAudioTime(nextBeatToSchedule);
     if (t > horizon) break;
     if (t >= actx.currentTime - 0.05 && nextBeatToSchedule <= END_BEAT) {
-      scheduleBeat(nextBeatToSchedule, t);
+      if (!musicBuffer) scheduleBeat(nextBeatToSchedule, t);
+      if (metronomeOn) playClick(t);
     }
     nextBeatToSchedule++;
     if (nextBeatToSchedule > END_BEAT + 4) break;
@@ -477,7 +685,7 @@ function tryHit(r, c) {
     if (n.row !== r || n.col !== c) continue;
     if (n.type === 'hold' && n.holding) continue;
 
-    const t = (startTime + n.beat * BEAT) * 1000;
+    const t = beatToAudioTime(n.beat) * 1000;
     const a = Math.abs(ms - t);
     if (a < JUDGE.bad && a < bestAbs) { bestAbs = a; best = n; }
   }
@@ -506,7 +714,7 @@ function tryHit(r, c) {
         }
       }
       aiPending = true;
-      aiMoveBeat = (actx.currentTime - startTime) / BEAT + 1.5;
+      aiMoveBeat = (actx.currentTime - startTime + OFFSET/1000) / BEAT + 1.5;
     }
   }
 
@@ -519,7 +727,7 @@ function tryHit(r, c) {
     best.hit = true;
     best.holding = true;
     best.holdStart = now;
-    best.holdEnd = startTime + (best.beat + best.duration) * BEAT;
+    best.holdEnd = beatToAudioTime(best.beat + best.duration);
   } else {
     best.hit = true;
   }
@@ -531,7 +739,7 @@ function checkMisses() {
   const ms = actx.currentTime * 1000;
   for (const n of notes) {
     if (n.hit || n.missed) continue;
-    const t = (startTime + n.beat * BEAT) * 1000;
+    const t = beatToAudioTime(n.beat) * 1000;
     if (ms > t + JUDGE.bad) {
       n.missed = true;
       missCount++;
@@ -883,7 +1091,6 @@ function updateParticles(dt) {
   }
 }
 
-// ==================== 编辑器渲染 ====================
 function drawEditMode() {
   ctx.save();
   ctx.globalAlpha = 0.25;
@@ -942,14 +1149,12 @@ function loop(now) {
 
   drawBoard();
 
-  // ===== 编辑模式 =====
   if (editMode) {
     drawEditMode();
     updateParticles(dt);
     return;
   }
 
-  // ===== 预览（未开始） =====
   if (!started || !actx) {
     ctx.save();
     ctx.globalAlpha = 0.28;
@@ -966,8 +1171,7 @@ function loop(now) {
     return;
   }
 
-  // ===== 游戏运行 =====
-  const beats = (actx.currentTime - startTime) / BEAT;
+  const beats = (actx.currentTime - startTime + OFFSET/1000) / BEAT;
 
   scheduler();
 
@@ -997,6 +1201,7 @@ function start() {
   initAudio();
   if (actx.state === 'suspended') actx.resume();
 
+  refreshChartRefs();
   buildNotes();
   resetBoard();
   score = 0; combo = 0; maxCombo = 0;
@@ -1007,10 +1212,76 @@ function start() {
 
   document.getElementById('overlay').classList.add('hide');
 
+  isTestRun = false;
   started = true;
   ended = false;
-  startTime = actx.currentTime + 4 * BEAT + 0.4;
+  startTime = actx.currentTime + 4 * BEAT + 0.4 + OFFSET / 1000;
   nextBeatToSchedule = -4;
+
+  if (musicBuffer) {
+    if (musicSource) {
+      try { musicSource.stop(); } catch(e) {}
+    }
+    musicSource = actx.createBufferSource();
+    musicSource.buffer = musicBuffer;
+    musicSource.connect(master);
+    musicSource.start(startTime - OFFSET / 1000);
+  }
+}
+
+function startTest() {
+  if (editNotes.length === 0) {
+    alert('谱面还是空的，先加几个音符吧');
+    return;
+  }
+
+  CHART = editNotes.map(n => ({ ...n }));
+  BPM = parseFloat(document.getElementById('bpmInput').value) || 120;
+  BEAT = 60 / BPM;
+  OFFSET = parseFloat(document.getElementById('offsetInput').value) || 0;
+  SPEED = parseFloat(document.getElementById('speedInput2').value) || 1;
+
+  let maxBeat = 0;
+  for (const n of CHART) {
+    const end = n.beat + (n.type === 'hold' ? n.duration : 0);
+    if (end > maxBeat) maxBeat = end;
+  }
+  END_BEAT = maxBeat + 6;
+
+  editMode = false;
+  document.getElementById('editBar').classList.remove('show');
+  document.getElementById('offsetPanel').classList.remove('show');
+  document.getElementById('jsonOut').classList.remove('show');
+  document.getElementById('editHint').classList.remove('show');
+  document.getElementById('hud').style.display = '';
+  document.getElementById('overlay').classList.add('hide');
+
+  initAudio();
+  if (actx.state === 'suspended') actx.resume();
+
+  buildNotes();
+  resetBoard();
+  score = 0; combo = 0; maxCombo = 0;
+  perfectCount = goodCount = badCount = missCount = 0;
+  particles.length = 0;
+  floaters.length = 0;
+  updateHUD();
+
+  isTestRun = true;
+  started = true;
+  ended = false;
+  startTime = actx.currentTime + 4 * BEAT + 0.4 + OFFSET / 1000;
+  nextBeatToSchedule = -4;
+
+  if (musicBuffer) {
+    if (musicSource) {
+      try { musicSource.stop(); } catch(e) {}
+    }
+    musicSource = actx.createBufferSource();
+    musicSource.buffer = musicBuffer;
+    musicSource.connect(master);
+    musicSource.start(startTime - OFFSET / 1000);
+  }
 }
 
 function finish() {
@@ -1030,8 +1301,216 @@ function finish() {
     'PERFECT ' + perfectCount + ' · GOOD ' + goodCount +
     ' · BAD ' + badCount + ' · MISS ' + missCount +
     '</span></div>';
-  document.getElementById('btn').textContent = '再 来 一 局';
+
+  const btn = document.getElementById('btn');
   ov.classList.remove('hide');
+
+  if (isTestRun) {
+    btn.textContent = '回到编辑';
+    btn.onclick = () => {
+      ov.classList.add('hide');
+      enterEdit();
+    };
+  } else {
+    btn.textContent = '再 来 一 局';
+    btn.onclick = start;
+  }
+}
+
+// ==================== 音乐导入 ====================
+function importMusic(file) {
+  initAudio();
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    try {
+      musicBuffer = await actx.decodeAudioData(e.target.result);
+      alert('音乐导入成功：' + file.name + '\n时长 ' + musicBuffer.duration.toFixed(1) + ' 秒');
+    } catch(err) {
+      alert('解码失败，请换一个 mp3 或 wav 文件');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function playPreview() {
+  if (!musicBuffer) {
+    alert('请先导入音乐');
+    return;
+  }
+  initAudio();
+  if (actx.state === 'suspended') actx.resume();
+  if (previewSource) {
+    try { previewSource.stop(); } catch(e) {}
+  }
+  previewSource = actx.createBufferSource();
+  previewSource.buffer = musicBuffer;
+  previewSource.connect(master);
+  previewSource.start();
+}
+
+function stopPreview() {
+  if (previewSource) {
+    try { previewSource.stop(); } catch(e) {}
+    previewSource = null;
+  }
+}
+
+// ==================== 导出 / 导入 JSON ====================
+function exportChart() {
+  // 保证导出的是最新内容
+  charts[currentChartIndex].notes = editNotes.map(n => ({ ...n }));
+  charts[currentChartIndex].bpm = parseFloat(document.getElementById('bpmInput').value) || 120;
+  charts[currentChartIndex].offset = parseFloat(document.getElementById('offsetInput').value) || 0;
+  charts[currentChartIndex].speed = parseFloat(document.getElementById('speedInput2').value) || 1;
+
+  const data = {
+    version: 3,
+    exportedAt: new Date().toISOString(),
+    chart: charts[currentChartIndex]
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const safeName = (charts[currentChartIndex].name || 'chart').replace(/[\\/:*?"<>|]/g, '_');
+  a.href = url;
+  a.download = safeName + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function importChartFromFile(file) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      // 支持两种格式：{chart: {...}} 或直接 {...}
+      const chart = data.chart || data;
+      if (!chart || !Array.isArray(chart.notes)) {
+        throw new Error('格式不对');
+      }
+      // 规范化
+      const normalized = {
+        name: chart.name || '导入的谱面',
+        bpm: parseFloat(chart.bpm) || 120,
+        offset: parseFloat(chart.offset) || 0,
+        speed: parseFloat(chart.speed) || 1,
+        notes: chart.notes.map(n => ({
+          beat: parseFloat(n.beat) || 0,
+          row: parseInt(n.row) || 0,
+          col: parseInt(n.col) || 0,
+          type: n.type === 'hold' ? 'hold' : 'tap',
+          duration: n.type === 'hold' ? (parseFloat(n.duration) || 1) : 0
+        }))
+      };
+
+      const choice = confirm(
+        '导入方式：\n\n' +
+        '【确定】替换当前谱面\n' +
+        '【取消】作为新谱面追加'
+      );
+
+      if (choice) {
+        // 替换当前
+        charts[currentChartIndex] = normalized;
+        saveCharts(charts);
+        refreshChartRefs();
+        editNotes = normalized.notes.map(n => ({ ...n }));
+        document.getElementById('bpmInput').value = normalized.bpm;
+        document.getElementById('offsetInput').value = normalized.offset;
+        document.getElementById('speedInput').value = normalized.speed;
+        document.getElementById('speedInput2').value = normalized.speed;
+        syncSpeed(normalized.speed);
+      } else {
+        // 追加为新谱面
+        charts.push(normalized);
+        currentChartIndex = charts.length - 1;
+        saveCharts(charts);
+        refreshChartRefs();
+        editNotes = normalized.notes.map(n => ({ ...n }));
+        document.getElementById('bpmInput').value = normalized.bpm;
+        document.getElementById('offsetInput').value = normalized.offset;
+        document.getElementById('speedInput').value = normalized.speed;
+        document.getElementById('speedInput2').value = normalized.speed;
+        syncSpeed(normalized.speed);
+      }
+
+      updateChartList();
+      updateEditOut();
+      alert('导入成功：' + normalized.name +
+            '\n音符数 ' + normalized.notes.length +
+            '\nBPM ' + normalized.bpm +
+            '\n偏移 ' + normalized.offset + ' ms' +
+            '\n线速 ' + normalized.speed);
+    } catch(err) {
+      alert('导入失败：' + err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
+// ==================== 谱面管理 ====================
+function updateChartList() {
+  const sel = document.getElementById('chartSelect');
+  if (!sel) return;
+  sel.innerHTML = '';
+  charts.forEach((c, i) => {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = c.name + (c.bpm ? ' (' + c.bpm + ' BPM)' : '');
+    sel.appendChild(opt);
+  });
+  sel.value = currentChartIndex;
+}
+
+function saveCurrentChart() {
+  charts[currentChartIndex].notes = editNotes.map(n => ({ ...n }));
+  charts[currentChartIndex].bpm = parseFloat(document.getElementById('bpmInput').value) || 120;
+  charts[currentChartIndex].offset = parseFloat(document.getElementById('offsetInput').value) || 0;
+  charts[currentChartIndex].speed = parseFloat(document.getElementById('speedInput2').value) || 1;
+  saveCharts(charts);
+  refreshChartRefs();
+  alert('已保存：BPM ' + charts[currentChartIndex].bpm +
+        ' / 偏移 ' + charts[currentChartIndex].offset + ' ms' +
+        ' / 线速 ' + charts[currentChartIndex].speed);
+}
+
+function newChart() {
+  const name = prompt('新谱面名称：', '我的谱面');
+  if (!name) return;
+  charts.push({ name, bpm: 120, offset: 0, speed: 1, notes: [] });
+  currentChartIndex = charts.length - 1;
+  saveCharts(charts);
+  updateChartList();
+  editNotes = [];
+  updateEditOut();
+}
+
+function deleteChart() {
+  if (charts.length <= 1) {
+    alert('至少保留一个谱面');
+    return;
+  }
+  if (!confirm('删除当前谱面？')) return;
+  charts.splice(currentChartIndex, 1);
+  currentChartIndex = 0;
+  saveCharts(charts);
+  updateChartList();
+  editNotes = charts[currentChartIndex].notes.map(n => ({ ...n }));
+  updateEditOut();
+}
+
+function switchChart(i) {
+  currentChartIndex = parseInt(i);
+  refreshChartRefs();
+  editNotes = charts[currentChartIndex].notes.map(n => ({ ...n }));
+  document.getElementById('bpmInput').value = charts[currentChartIndex].bpm || 120;
+  document.getElementById('offsetInput').value = charts[currentChartIndex].offset || 0;
+  document.getElementById('speedInput').value = charts[currentChartIndex].speed || 1;
+  document.getElementById('speedInput2').value = charts[currentChartIndex].speed || 1;
+  document.getElementById('speedInput3').value = charts[currentChartIndex].speed || 1;
+  updateEditOut();
 }
 
 // ==================== 编辑器逻辑 ====================
@@ -1042,16 +1521,25 @@ function enterEdit() {
   editNotes = CHART.map(n => ({ ...n }));
   editHistory = [];
   document.getElementById('editBar').classList.add('show');
+  document.getElementById('offsetPanel').classList.add('show');
   document.getElementById('jsonOut').classList.add('show');
   document.getElementById('editHint').classList.add('show');
   document.getElementById('overlay').classList.add('hide');
   document.getElementById('hud').style.display = 'none';
+  document.getElementById('bpmInput').value = charts[currentChartIndex].bpm || 120;
+  document.getElementById('offsetInput').value = charts[currentChartIndex].offset || 0;
+  document.getElementById('speedInput').value = charts[currentChartIndex].speed || 1;
+  document.getElementById('speedInput2').value = charts[currentChartIndex].speed || 1;
+  document.getElementById('speedInput3').value = charts[currentChartIndex].speed || 1;
+  updateChartList();
   updateEditOut();
 }
 
 function exitEdit() {
   editMode = false;
+  stopPreview();
   document.getElementById('editBar').classList.remove('show');
+  document.getElementById('offsetPanel').classList.remove('show');
   document.getElementById('jsonOut').classList.remove('show');
   document.getElementById('editHint').classList.remove('show');
   document.getElementById('hud').style.display = '';
@@ -1061,13 +1549,21 @@ function exitEdit() {
     '扫描线每经过一行，点击该行上的交叉点落子。<br>' +
     '越接近节拍，判定越高。<br>' +
     '你落黑子后，AI 会走白子。<br>' +
-    '按 E 键（或右下角按钮）进入谱面编辑。<br>' +
+    '按 E 键进入谱面编辑，可导入音乐、<br>' +
+    '写谱、校准偏移、调节线速、导出/导入。<br>' +
     '开始前有 4 拍预备。';
-  document.getElementById('btn').textContent = '开 始';
+  const btn = document.getElementById('btn');
+  btn.textContent = '开 始';
+  btn.onclick = start;
 }
 
 function updateEditOut() {
-  document.getElementById('jsonOut').textContent = JSON.stringify(editNotes, null, 2);
+  document.getElementById('jsonOut').textContent =
+    'BPM: ' + (parseFloat(document.getElementById('bpmInput').value) || 120) +
+    '  OFFSET: ' + (parseFloat(document.getElementById('offsetInput').value) || 0) + ' ms' +
+    '  SPEED: ' + (parseFloat(document.getElementById('speedInput2').value) || 1) +
+    '  音符数: ' + editNotes.length + '\n' +
+    JSON.stringify(editNotes, null, 2);
 }
 
 function editPointer(px, py) {
@@ -1081,7 +1577,6 @@ function editPointer(px, py) {
   if (editHistory.length > 50) editHistory.shift();
 
   if (editDelete) {
-    // 删除该位置最近的音符
     let idx = -1, minD = Infinity;
     for (let i = 0; i < editNotes.length; i++) {
       const n = editNotes[i];
@@ -1132,7 +1627,7 @@ canvas.addEventListener('pointerdown', (e) => {
   tryHit(r, c);
 }, { passive: false });
 
-canvas.addEventListener('pointerup', (e) => {
+canvas.addEventListener('pointerup', () => {
   if (!started || ended) return;
   releaseHold();
 });
@@ -1142,7 +1637,6 @@ canvas.addEventListener('pointercancel', () => {
   releaseHold();
 });
 
-// 键盘快捷键
 window.addEventListener('keydown', (e) => {
   if (e.key === 'e' || e.key === 'E') {
     if (editMode) exitEdit();
@@ -1150,13 +1644,13 @@ window.addEventListener('keydown', (e) => {
   }
 });
 
-document.getElementById('btn').addEventListener('click', start);
+// ==================== 绑定 UI ====================
+document.getElementById('btn').onclick = start;
 document.getElementById('editToggle').addEventListener('click', () => {
   if (editMode) exitEdit();
   else enterEdit();
 });
 
-// ==================== 编辑器 UI 绑定 ====================
 document.getElementById('mTap').onclick = () => {
   editMode2 = 'tap';
   editDelete = false;
@@ -1192,20 +1686,130 @@ document.getElementById('clearBtn').onclick = () => {
   updateEditOut();
 };
 
-document.getElementById('copyBtn').onclick = () => {
-  const txt = JSON.stringify(editNotes, null, 2);
-  if (navigator.clipboard) {
-    navigator.clipboard.writeText(txt).then(() => {
-      alert('已复制 JSON，粘贴回代码里的 CHART 即可');
-    }).catch(() => {
-      alert('复制失败，请手动从下方选择复制');
-    });
-  } else {
-    alert('当前浏览器不支持自动复制，请手动选择下方文本');
+document.getElementById('saveBtn').onclick = saveCurrentChart;
+document.getElementById('testBtn').onclick = startTest;
+document.getElementById('newChartBtn').onclick = newChart;
+document.getElementById('delChartBtn').onclick = deleteChart;
+document.getElementById('closeEdit').onclick = exitEdit;
+
+document.getElementById('musicInput').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (file) importMusic(file);
+});
+
+document.getElementById('chartSelect').addEventListener('change', (e) => {
+  switchChart(e.target.value);
+});
+
+document.getElementById('bpmInput').addEventListener('change', () => {
+  const v = parseFloat(document.getElementById('bpmInput').value);
+  if (v > 30 && v < 300) {
+    BPM = v;
+    BEAT = 60 / BPM;
+    updateEditOut();
   }
+});
+
+document.getElementById('offsetInput').addEventListener('change', () => {
+  const v = parseFloat(document.getElementById('offsetInput').value) || 0;
+  OFFSET = v;
+  updateEditOut();
+});
+
+function syncSpeed(val) {
+  let v = parseFloat(val);
+  if (isNaN(v)) v = 1;
+  v = Math.max(0.3, Math.min(3, v));
+  SPEED = v;
+  document.getElementById('speedInput').value = v;
+  document.getElementById('speedInput2').value = v;
+  document.getElementById('speedInput3').value = v;
+  updateEditOut();
+}
+
+document.getElementById('speedInput').addEventListener('change', (e) => syncSpeed(e.target.value));
+document.getElementById('speedInput2').addEventListener('change', (e) => syncSpeed(e.target.value));
+document.getElementById('speedInput3').addEventListener('change', (e) => syncSpeed(e.target.value));
+
+document.getElementById('offsetBtn').onclick = () => {
+  document.getElementById('offsetPanel').classList.toggle('show');
 };
 
-document.getElementById('closeEdit').onclick = exitEdit;
+document.getElementById('offsetMinus').onclick = () => {
+  const el = document.getElementById('offsetInput');
+  el.value = (parseFloat(el.value) || 0) - 50;
+  el.dispatchEvent(new Event('change'));
+};
+
+document.getElementById('offsetMinus10').onclick = () => {
+  const el = document.getElementById('offsetInput');
+  el.value = (parseFloat(el.value) || 0) - 10;
+  el.dispatchEvent(new Event('change'));
+};
+
+document.getElementById('offsetPlus10').onclick = () => {
+  const el = document.getElementById('offsetInput');
+  el.value = (parseFloat(el.value) || 0) + 10;
+  el.dispatchEvent(new Event('change'));
+};
+
+document.getElementById('offsetPlus').onclick = () => {
+  const el = document.getElementById('offsetInput');
+  el.value = (parseFloat(el.value) || 0) + 50;
+  el.dispatchEvent(new Event('change'));
+};
+
+document.getElementById('offsetPlay').onclick = playPreview;
+document.getElementById('offsetStop').onclick = stopPreview;
+
+function bindSpeedBtn(id, delta) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.onclick = () => {
+    const cur = parseFloat(document.getElementById('speedInput2').value) || 1;
+    syncSpeed(cur + delta);
+  };
+}
+bindSpeedBtn('speedMinus', -0.1);
+bindSpeedBtn('speedMinus2', -0.5);
+bindSpeedBtn('speedPlus2', 0.5);
+bindSpeedBtn('speedPlus', 0.1);
+
+function bindSpeedBtnGame(id, delta) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.onclick = () => {
+    const cur = parseFloat(document.getElementById('speedInput3').value) || 1;
+    syncSpeed(cur + delta);
+  };
+}
+bindSpeedBtnGame('speedMinusGame', -0.1);
+bindSpeedBtnGame('speedMinus2Game', -0.5);
+bindSpeedBtnGame('speedPlus2Game', 0.5);
+bindSpeedBtnGame('speedPlusGame', 0.1);
+
+document.getElementById('speedToggle').onclick = () => {
+  document.getElementById('speedPanel').classList.toggle('show');
+};
+
+document.getElementById('metronomeBtn').onclick = () => {
+  metronomeOn = !metronomeOn;
+  document.getElementById('metronomeBtn').classList.toggle('on', metronomeOn);
+};
+
+// 导出/导入绑定
+document.getElementById('exportBtn').onclick = exportChart;
+document.getElementById('exportBtn2').onclick = exportChart;
+
+document.getElementById('importJsonInput').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (file) importChartFromFile(file);
+  e.target.value = '';
+});
+
+document.getElementById('importJsonBtn2').onclick = () => {
+  document.getElementById('importJsonInput').click();
+};
 
 // ==================== 启动 ====================
 resize();
