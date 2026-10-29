@@ -243,12 +243,25 @@ input,select,textarea{-webkit-user-select:text;user-select:text}
   background:radial-gradient(circle at 36% 32%,rgba(126,240,255,.20),rgba(126,240,255,0) 66%);
   pointer-events:none}
 .libHead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;position:relative;z-index:1}
-.libHead h2{font-size:clamp(17px,1.7vw,21px);font-weight:500;line-height:1.45;color:#cfefff;
-  letter-spacing:.4px}
+.libHead h2{font-size:clamp(17px,1.7vw,21px);font-weight:500;line-height:1.45;color:#cfefff;letter-spacing:.4px}
 .libMeta{font-size:11px;opacity:.45;margin-top:6px;letter-spacing:1px}
 .libBpm{text-align:right;font-size:26px;font-weight:600;color:#9ef4ff;line-height:1;
   text-shadow:0 0 18px rgba(60,216,255,.4);font-variant-numeric:tabular-nums;white-space:nowrap}
 .libBpm small{display:block;font-size:9px;font-weight:400;letter-spacing:2px;opacity:.45;margin-top:4px}
+.libAudio{display:flex;align-items:center;gap:10px;margin-top:14px;position:relative;z-index:1}
+.libImport{position:relative;flex:0 0 auto;min-height:40px;padding:8px 14px;border-radius:10px;
+  border:1px solid rgba(126,240,255,.35);background:rgba(126,240,255,.08);color:#9ef4ff;
+  font-family:inherit;font-size:12px;letter-spacing:1px;cursor:pointer;display:inline-flex;
+  align-items:center;justify-content:center;touch-action:manipulation;overflow:hidden;
+  white-space:nowrap;-webkit-appearance:none;appearance:none}
+.libImport:active{background:rgba(126,240,255,.2)}
+.libImport.working{opacity:.55}
+.libFile{position:fixed;left:-9999px;top:0;width:1px;height:1px;opacity:0;overflow:hidden;
+  pointer-events:none}
+.libImportTxt{pointer-events:none}
+.libAudioState{font-size:11px;opacity:.5;line-height:1.5;min-width:0;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.libAudioState.ok{opacity:.85;color:#8affc1}
 .libDiffs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px;position:relative;z-index:1}
 .libDiff{min-height:66px;padding:8px 4px;border-radius:12px;border:1px solid rgba(126,240,255,.22);
   background:rgba(60,216,255,.05);color:#cfe9f5;font-family:inherit;cursor:pointer;
@@ -262,17 +275,6 @@ input,select,textarea{-webkit-user-select:text;user-select:text}
 .libDiff.hd{color:#ffb36b;border-color:rgba(255,179,107,.34);background:rgba(255,179,107,.06)}
 .libDiff:active{transform:scale(.95)}
 .libDiff:disabled{opacity:.45;cursor:default}
-.libAudio{display:flex;align-items:center;gap:10px;margin-top:14px;position:relative;z-index:1}
-.libImport{position:relative;flex:0 0 auto;min-height:40px;padding:8px 14px;border-radius:10px;
-  border:1px solid rgba(126,240,255,.35);background:rgba(126,240,255,.08);color:#9ef4ff;
-  font-size:12px;letter-spacing:1px;cursor:pointer;display:inline-flex;align-items:center;
-  justify-content:center;touch-action:manipulation;overflow:hidden;white-space:nowrap}
-.libImport:active{background:rgba(126,240,255,.2)}
-.libImport.working{opacity:.55}
-.libFile{position:absolute;left:0;top:0;width:1px;height:1px;opacity:0;overflow:hidden}
-.libAudioState{font-size:11px;opacity:.5;line-height:1.5;min-width:0;overflow:hidden;
-  text-overflow:ellipsis;white-space:nowrap}
-.libAudioState.ok{opacity:.85;color:#8affc1}
 #libMsg{min-height:22px;text-align:center;font-size:12px;letter-spacing:.5px;color:#9ef4ff;
   margin-top:18px;opacity:.8;line-height:1.7}
 #libMsg.err{color:#ff9b9b;opacity:1}
@@ -3249,7 +3251,7 @@ requestAnimationFrame(loop);
 </script>
 <script>
 
-( () => {
+(() => {
 'use strict';
 const LIB = JSON.parse(document.getElementById('SONG_LIBRARY').textContent);
 const E = window.YipaiEngine;
@@ -3262,28 +3264,23 @@ const STORE = 'audio';
 let busy = false;
 let importing = false;
 let dbP = null;
-const records = {};   // song.id -> { blob, name, size, type, at }
-const buffers = {};   // song.id -> AudioBuffer
-const uis = {};       // song.id -> { label, state }
+const records = {};
+const buffers = {};
+const uis = {};
 
 function esc(s) {
-  return String(s).replace(/[&<>"']/g, c => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-  }[c]));
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
-
 function setMsg(t, err) {
   libMsg.textContent = t || '';
   libMsg.classList.toggle('err', !!err);
 }
-
 function dbOpen() {
   if (dbP) return dbP;
   dbP = new Promise((ok, no) => {
     if (!window.indexedDB) { no(new Error('浏览器不支持 IndexedDB')); return; }
     let r;
-    try { r = indexedDB.open(DB_NAME, 1); }
-    catch (e) { no(e); return; }
+    try { r = indexedDB.open(DB_NAME, 1); } catch (e) { no(e); return; }
     r.onupgradeneeded = () => {
       if (!r.result.objectStoreNames.contains(STORE)) r.result.createObjectStore(STORE);
     };
@@ -3292,7 +3289,6 @@ function dbOpen() {
   });
   return dbP;
 }
-
 function dbGet(key) {
   return dbOpen().then(db => new Promise((ok, no) => {
     const tx = db.transaction(STORE, 'readonly');
@@ -3301,7 +3297,6 @@ function dbGet(key) {
     q.onerror = () => no(q.error);
   }));
 }
-
 function dbPut(key, val) {
   return dbOpen().then(db => new Promise((ok, no) => {
     const tx = db.transaction(STORE, 'readwrite');
@@ -3310,7 +3305,6 @@ function dbPut(key, val) {
     tx.onerror = () => no(tx.error);
   }));
 }
-
 function decodeAudio(ab, actx) {
   return new Promise((ok, no) => {
     let p;
@@ -3319,7 +3313,6 @@ function decodeAudio(ab, actx) {
     if (p && p.then) p.then(ok, no);
   });
 }
-
 async function getAudio(song, actx) {
   if (buffers[song.id]) return buffers[song.id];
   const rec = records[song.id];
@@ -3336,13 +3329,11 @@ async function getAudio(song, actx) {
   buffers[song.id] = buf;
   return buf;
 }
-
 function fmtSize(n) {
   if (!n) return '';
   if (n > 1024 * 1024) return (n / 1024 / 1024).toFixed(1) + 'MB';
   return Math.round(n / 1024) + 'KB';
 }
-
 function updateAudioUI(song) {
   const ui = uis[song.id];
   if (!ui) return;
@@ -3357,7 +3348,6 @@ function updateAudioUI(song) {
     ui.state.classList.remove('ok');
   }
 }
-
 async function importSong(song, file) {
   if (importing) return;
   importing = true;
@@ -3401,7 +3391,6 @@ async function importSong(song, file) {
     if (ui) ui.label.classList.remove('working');
   }
 }
-
 async function start(song, diff, btn) {
   if (busy) return;
   busy = true;
@@ -3428,17 +3417,14 @@ async function start(song, diff, btn) {
     btn.disabled = false;
   }
 }
-
 function showLibrary() {
   E.showLibraryView();
   lib.classList.add('show');
   setMsg('');
 }
-
 function hideLibrary() {
   lib.classList.remove('show');
 }
-
 async function loadStored() {
   for (const song of LIB) {
     try {
@@ -3448,7 +3434,6 @@ async function loadStored() {
     updateAudioUI(song);
   }
 }
-
 LIB.forEach(song => {
   const card = document.createElement('article');
   card.className = 'libCard';
@@ -3459,26 +3444,28 @@ LIB.forEach(song => {
       '<div class="libBpm">' + Math.round(song.bpm) + '<small>BPM</small></div>' +
     '</div>' +
     '<div class="libAudio">' +
-      '<label class="libImport"><span class="libImportTxt">导入音频</span></label>' +
+      '<button type="button" class="libImport"><span class="libImportTxt">导入音频</span></button>' +
       '<span class="libAudioState">未导入 · 点「导入音频」选择 MP3</span>' +
     '</div>' +
     '<div class="libDiffs"></div>';
-
   const label = card.querySelector('.libImport');
   const state = card.querySelector('.libAudioState');
   const input = document.createElement('input');
   input.type = 'file';
-  input.accept = 'audio/*';
+  input.accept = 'audio/*,.mp3,.m4a,.wav,.ogg,.aac,.flac';
   input.className = 'libFile';
-  label.appendChild(input);
-  label.addEventListener('click', () => { try { E.ensureAudio(); } catch (e) {} });
+  input.setAttribute('aria-hidden', 'true');
+  card.appendChild(input);
+  label.addEventListener('click', () => {
+    try { input.click(); }
+    catch (e) { setMsg('无法打开文件选择器，请用 Safari 打开本页再试', true); }
+  });
   input.addEventListener('change', () => {
     const f = input.files && input.files[0];
     input.value = '';
     if (f) importSong(song, f);
   });
   uis[song.id] = { label, state };
-
   const box = card.querySelector('.libDiffs');
   DIFFS.forEach(d => {
     const ch = song.charts[d];
@@ -3490,13 +3477,14 @@ LIB.forEach(song => {
   });
   libCards.appendChild(card);
 });
-
 E.setLibraryReturn(showLibrary);
 E.showLibraryView();
 lib.classList.add('show');
 loadStored();
 })();
+
 </script>
+
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function () {
